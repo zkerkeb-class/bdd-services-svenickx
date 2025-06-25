@@ -3,8 +3,12 @@ import { Generated, Insertable, Selectable, Updateable } from "kysely";
 export interface UserTable {
   id: Generated<number>;
   email: string;
-  password: string;
-  username: string;
+  emailVerified: boolean;
+  password?: string;
+  firstname?: string;
+  lastname?: string;
+  providerName?: string;
+  providerId?: string;
   createdAt: Generated<Date>;
 }
 

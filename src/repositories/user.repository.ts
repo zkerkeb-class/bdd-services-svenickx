@@ -1,6 +1,6 @@
 import { Kysely } from "kysely";
 import { Database } from "../config/db";
-import { IUser, NewUser } from "../models/user";
+import { IUser, NewUser, UserUpdate } from "../models/user";
 
 export default class UserRepository {
   constructor(private readonly db: Kysely<Database>) {}
@@ -21,16 +21,49 @@ export default class UserRepository {
       .executeTakeFirst();
   }
 
+  async getUserByProvider(
+    providerName: string,
+    providerId: string
+  ): Promise<IUser | undefined> {
+    return await this.db
+      .selectFrom("user")
+      .selectAll()
+      .where("providerName", "=", providerName)
+      .where("providerId", "=", providerId)
+      .executeTakeFirst();
+  }
+
   async createUser(user: NewUser): Promise<IUser> {
     try {
       return await this.db
         .insertInto("user")
         .values(user)
-        .returning(["id", "email", "username", "createdAt"])
+        .returning([
+          "id",
+          "email",
+          "firstname",
+          "lastname",
+          "providerName",
+          "providerId",
+          "emailVerified",
+          "createdAt",
+        ])
         .executeTakeFirstOrThrow();
     } catch (error) {
       console.error("🚀 ~ UserRepository ~ createUser ~ error:", error);
       throw new Error("Failed to create user");
     }
+  }
+
+  async update(
+    userUpdate: UserUpdate,
+    userId: number
+  ): Promise<IUser | undefined> {
+    return await this.db
+      .updateTable("user")
+      .set(userUpdate)
+      .where("user.id", "=", userId)
+      .returningAll()
+      .executeTakeFirst();
   }
 }
