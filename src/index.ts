@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
 import { createServer } from "http";
+import client from "prom-client";
 import { Server } from "socket.io";
 import DB from "./config/db";
 import EmailVerificationTokenController from "./controllers/emailVerificationToken.controller";
@@ -22,6 +23,15 @@ import UserRouter from "./routes/user.routes";
 dotenv.config({ path: __dirname + "/../../.env" });
 
 const app: Express = express();
+
+client.collectDefaultMetrics();
+
+const requestCounter = new client.Counter({
+  name: "http_requests_total",
+  help: "Total des requêtes HTTP",
+  labelNames: ["method", "route", "status"],
+});
+
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
@@ -45,6 +55,23 @@ app.use(
     credentials: true,
   })
 );
+
+app.use((req, res, next) => {
+  res.on("finish", () => {
+    requestCounter.inc({
+      method: req.method,
+      route: req.path,
+      status: res.statusCode,
+    });
+  });
+  next();
+});
+// Endpoint pour exposer les métriques
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", client.register.contentType);
+  res.end(await client.register.metrics());
+});
+
 const db = new DB().db;
 
 const userRepository = new UserRepository(db);

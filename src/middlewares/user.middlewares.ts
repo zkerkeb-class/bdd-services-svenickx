@@ -12,20 +12,26 @@ export default class UserMiddleware {
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-    const { id } = decoded;
-    if (!id) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+      const { id } = decoded;
+      if (!id) {
+        res.status(401).json({ message: "Invalid access token" });
+        return;
+      }
+
+      const user = await this.userRepository.getUserById(id);
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+
+      res.locals.user = user;
+    } catch (error) {
+      console.error("Error verifying token:", error);
       res.status(401).json({ message: "Invalid access token" });
       return;
     }
-
-    const user = await this.userRepository.getUserById(id);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
-
-    res.locals.user = user;
     next();
   };
 }

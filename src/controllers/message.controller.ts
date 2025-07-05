@@ -25,26 +25,28 @@ export default class MessageController {
 
     //#region Moderation
 
-    // const moderationResponse = await fetchApi(
-    //   `${process.env.IA_SERVICE_URL}moderate`,
-    //   "post",
-    //   {
-    //     content,
-    //   }
-    // );
+    const moderationResponse = await fetchApi(
+      `${process.env.IA_SERVICE_URL}moderate`,
+      "post",
+      {
+        content,
+      }
+    );
 
-    // if (!moderationResponse.success) {
-    //   res.status(moderationResponse.code).json({ error: "Something went wrong" });
-    //   return;
-    // }
+    if (!moderationResponse.success) {
+      res
+        .status(moderationResponse.code)
+        .json({ error: "Something went wrong" });
+      return;
+    }
 
-    // if (moderationResponse.data.flagged) {
-    //   res.status(400).json({
-    //     error: "Message flagged",
-    //     reason: moderationResponse.data.reason,
-    //   });
-    //   return;
-    // }
+    if (moderationResponse.data.flagged) {
+      res.status(400).json({
+        error: "Message flagged",
+        reason: moderationResponse.data.reason,
+      });
+      return;
+    }
 
     //#endregion
 
